@@ -45,3 +45,14 @@ export type CompositeRowProps = Pick<
 	Ariakit.CompositeRowProps,
 	'render' | 'children'
 >;
+
+export type CompositeHoverProps = Pick<
+	Ariakit.CompositeHoverProps,
+	'render' | 'children' | 'focusOnHover' | 'blurOnHoverEnd'
+>;
+
+// TODO: check that props make sense
+export type CompositeTypeaheadProps = Pick<
+	Ariakit.CompositeTypeaheadProps,
+	'render' | 'children'
+>;

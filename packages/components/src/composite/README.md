@@ -174,3 +174,11 @@ Allows the component to be rendered as a different HTML element or React compone
 The contents of the component.
 
 -   Required: no
+
+### `Composite.Hover`
+
+TODO
+
+### `Composite.Typeahead`
+
+TODO
