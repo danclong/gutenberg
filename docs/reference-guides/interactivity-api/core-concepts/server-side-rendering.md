@@ -1,6 +1,6 @@
-WordPress has always been built on the foundation of server-side rendering. Traditionally, when a user requests a WordPress page, the server processes the PHP code, queries the database, and generates the HTML markup that is sent to the browser. This approach has been a cornerstone of WordPress's functionality, enabling themes and plugins to dynamically generate content before it reaches the user's browser.
+WordPress has always been built on the foundation of server-side rendering. Traditionally, when a user requests a WordPress page, the server processes the PHP code, queries the database, and generates the HTML markup that is sent to the browser. This approach has been fundamental to WordPress's functionality, enabling themes and plugins to dynamically generate content before it reaches the user's browser.
 
-In recent years, modern JavaScript frameworks like Vue, React, or Svelte have revolutionized the way we build web applications. These frameworks provide reactive and declarative programming models that enable developers to create dynamic, interactive user interfaces with ease. However, when it comes to server-side rendering, these frameworks require a JavaScript-based server, such as Node.js, to execute their code and generate the initial HTML. This means that PHP-based servers, like WordPress, cannot directly utilize these frameworks for server-side rendering without sacrificing their native PHP rendering capabilities. This limitation poses a challenge for WordPress developers who want to leverage the power of reactive and declarative programming while still benefiting from WordPress's traditional server-side rendering strengths.
+In recent years, modern JavaScript frameworks like Vue, React, or Svelte have revolutionized the way we build web applications. These frameworks provide reactive and declarative programming models that enable developers to create dynamic, interactive user interfaces with ease. However, when it comes to server-side rendering, these frameworks require a JavaScript-based server, such as Node.js, to execute their code and generate the initial HTML. This means that PHP-based servers, like WordPress, cannot directly utilize these frameworks without sacrificing their native PHP rendering capabilities. This limitation poses a challenge for WordPress developers who want to leverage the power of reactive and declarative programming while still benefiting from WordPress's traditional server-side rendering strengths.
 
 The Interactivity API bridges this gap by bringing reactive and declarative programming principles to WordPress without compromising its server-side rendering foundation. The Interactivity API's Server Directive Processing capabilities enable WordPress to generate the initial HTML with the correct interactive state, providing a faster initial render. After the initial server-side render, the Interactivity API's client-side JavaScript takes over, enabling dynamic updates and interactions without requiring full page reloads. This approach combines the best of both worlds: the SEO and performance benefits of traditional WordPress server-side rendering, and the dynamic, reactive user interfaces offered by modern JavaScript frameworks.
 
@@ -125,36 +125,19 @@ This Server Directive Processing provides several benefits:
 
 One of the key strengths of the Interactivity API is how it bridges the gap between server-side rendering and client-side interactivity. To do so, the global state and local context initialized on the server are also serialized and made available on the client, allowing the application to continue functioning and manipulating the DOM dynamically.
 
-After this initial server-side rendering, the Interactivity API's client-side JavaScript takes over. It hydrates the interactive elements, enabling dynamic updates and interactions without requiring full page reloads.
-
 Let's extend the example to include a button that the user can click to add a new fruit to the list:
 
-```php
-<?php
-wp_interactivity_state( 'myFruitPlugin', array(
-    'fruits' => array( 'Apple', 'Banana', 'Cherry' )
-));
-?>
-<div data-wp-interactive="myFruitPlugin">
-    <ul>
-        <template data-wp-each="state.fruits">
-            <li data-wp-text="context.item"></li>
-        </template>
-    </ul>
-    <button data-wp-on--click="actions.addFruit">Add Fruit</button>
-</div>
+```html
+<button data-wp-on--click="actions.addMango">Add Mango</button>
 ```
 
-The new button has a `data-wp-on--click` directive that references `actions.addFruit`, which is defined in our JavaScript store:
+The new button has a `data-wp-on--click` directive that references `actions.addMango`, which is defined in our JavaScript store:
 
 ```javascript
 const { state } = store( 'myFruitPlugin', {
 	actions: {
-		addFruit: () => {
-			const newFruit = prompt( 'Enter a new fruit:' );
-			if ( newFruit ) {
-				state.fruits.push( newFruit );
-			}
+		addMango() {
+			state.fruits.push( 'Mango' );
 		},
 	},
 } );
@@ -165,23 +148,19 @@ The same example also works when using local context:
 ```javascript
 store( 'myFruitPlugin', {
 	actions: {
-		addFruit: () => {
-			const newFruit = prompt( 'Enter a new fruit:' );
-			if ( newFruit ) {
-				const context = getContext();
-				context.fruits.push( newFruit );
-			}
+		addMango() {
+			const context = getContext();
+			context.fruits.push( 'Mango' );
 		},
 	},
 } );
 ```
 
-When the user clicks the "Add Fruit" button:
+When the user clicks the "Add Mango" button:
 
-1.  The `addFruit` action is triggered.
-2.  The user is prompted to enter a new fruit name.
-3.  If a name is entered, it's added to the `state.fruits` or `context.fruits` array.
-4.  The Interactivity API automatically updates the DOM, adding a new `<li>` element for the new fruit.
+1.  The `addMango` action is triggered.
+2.  The `'Mango'` item is added to the `state.fruits` or `context.fruits` array.
+3.  The Interactivity API automatically updates the DOM, adding a new `<li>` element for the new fruit.
 
     ```html
     <ul>
@@ -191,6 +170,134 @@ When the user clicks the "Add Fruit" button:
     	<li>Mango</li>
     </ul>
     ```
+
+### 6. Working with derived state
+
+Derived state, regardless of whether it derives from the global state, local context, or both, can also be processed on the server by the Server Directive Processing.
+
+Let's imagine adding a button that can delete all fruits:
+
+```html
+<button data-wp-on--click="actions.deleteFruits">Delete all fruits</button>
+```
+
+```javascript
+store( 'myFruitPlugin', {
+	actions: {
+		addMango() {
+			state.fruits.push( 'Mango' );
+		},
+		deleteFruits() {
+			state.fruits = [];
+		},
+	},
+} );
+```
+
+In the same way, using local context:
+
+```javascript
+store( 'myFruitPlugin', {
+	actions: {
+		addMango() {
+			const context = getContext();
+			context.fruits.push( 'Mango' );
+		},
+		deleteFruits() {
+			const context = getContext();
+			context.fruits = [];
+		},
+	},
+} );
+```
+
+Now we want to display a special message when there is no fruit. To do this, we will use the `data-wp-bind--hidden` directive and a derived state called `state.hasFruits` that will indicate whether the array is empty or not.
+
+```html
+<div data-wp-bind--hidden="!state.hasFruits">No fruits, sorry!</div>
+<ul data-wp-interactive="myFruitPlugin">
+	<template data-wp-each="state.fruits">
+		<li data-wp-text="context.item"></li>
+	</template>
+</ul>
+```
+
+```javascript
+const { state } = store( 'myFruitPlugin', {
+	state: {
+		get hasFruits() {
+			return state.fruits.length > 0;
+		},
+	},
+	actions: {
+		// ...
+	},
+} );
+```
+
+And the same if we use local context:
+
+```javascript
+store( 'myFruitPlugin', {
+	state: {
+		get hasFruits() {
+			const context = getContext();
+			return context.fruits.length > 0;
+		},
+	},
+	actions: {
+		// ...
+	},
+} );
+```
+
+Up to this point, everything is fine, and when we press the button in the browser, the message will be displayed. The problem is that since `state.hasFruits` is not defined on the server, the `hidden` attribute will not be part of the initial HTML, which means we will also be showing the message until JavaScript loads.
+
+To define the initial value of the derived state, we can use `wp_interactivity_state`.
+
+-   We can define the value directly:
+
+    ```php
+    wp_interactivity_state( 'myFruitPlugin', array(
+      'fruits'    => array( 'Apple', 'Banana', 'Cherry' ),
+      'hasFruits' => true
+    ));
+    ```
+
+-   Or doing the necessary computation on the server:
+
+    ```php
+    $fruits = array( 'Apple', 'Banana', 'Cherry' );
+    $hasFruits = count( $fruits ) > 0;
+
+    wp_interactivity_state( 'myFruitPlugin', array(
+      'fruits'    => $fruits,
+      'hasFruits' => $hasFruits,
+    ));
+    ```
+
+However, the key point is that the initial value of `state.hasFruits` now resides on the server. This allows the Server Directive Processing to handle the `data-wp-bind--hidden` directive and modify the HTML, adding the `hidden` attribute when needed.
+
+### 7. Serializing values to be consumed on the server
+
+Another important functionality of the Interactivity API is to take advantage of serialization to send processed values from the server that we can then use on the client. This is useful in various scenarios, such as handling translations, for example.
+
+Let's add translations to our block.
+
+```php
+wp_interactivity_state( 'myFruitPlugin', array(
+  'fruits'    => array( __( 'Apple' ), __( 'Banana' ), __( 'Cherry' ) ),
+  'hasFruits' => true
+));
+```
+
+-   that's it
+-   but Mango??
+-   Add to state
+
+...
+
+-   dynamic derived state
 
 ### Conclusion
 
@@ -207,11 +314,7 @@ With the Interactivity API, the transition from server to client is smooth and t
 
 ---
 
--   Change example to `actions.addMango`.
 -   Derived state
-    -   Add example of static derived state
-        -   For state
-        -   For context
     -   Add fruit translations
         ```php
         wp_interactivity_state('..', [
