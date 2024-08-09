@@ -51,7 +51,6 @@ export type CompositeHoverProps = Pick<
 	'render' | 'children' | 'focusOnHover' | 'blurOnHoverEnd'
 >;
 
-// TODO: check that props make sense
 export type CompositeTypeaheadProps = Pick<
 	Ariakit.CompositeTypeaheadProps,
 	'render' | 'children'
